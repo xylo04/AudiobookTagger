@@ -1,0 +1,9 @@
+AudiobookTagger is a Java tool to simplify renaming and retagging
+audiobooks in MP3 format. This is traditionally a very labor-intensive,
+tedious process.
+
+This project is contained in an Eclipse project. To build it, import the
+project in Eclipse.
+
+This project uses the JAudioTagger open-source library.
+https://jaudiotagger.dev.java.net/
