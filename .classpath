@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="C:/Users/Chris/workspace/AudiobookTagger/lib/jaudiotagger-2.0.4-SNAPSHOT.jar" sourcepath="C:/Users/Chris/workspace/AudiobookTagger/lib/jaudiotagger-2.0.4-SNAPSHOT-sources.jar">
+	<classpathentry kind="lib" path="lib/jaudiotagger-2.0.4-SNAPSHOT.jar" sourcepath="lib/jaudiotagger-2.0.4-SNAPSHOT-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/C:/Users/Chris/workspace/AudiobookTagger/lib/jaudiotagger-2.0.4-SNAPSHOT-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:platform:/resource/AudiobookTagger/lib/jaudiotagger-2.0.4-SNAPSHOT-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

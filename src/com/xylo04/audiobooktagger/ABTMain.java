@@ -1,9 +1,9 @@
 package com.xylo04.audiobooktagger;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,42 +15,6 @@ import org.jaudiotagger.tag.Tag;
 public class ABTMain {
 
 	private static Logger log;
-
-	private static AudiobookInfo audiobookQuestionaire() {
-		AudiobookInfo abi = new AudiobookInfo();
-		BufferedReader conIn = new BufferedReader(new InputStreamReader(
-				System.in));
-
-		try {
-			System.out.print("Author: ");
-			abi.setAuthor(conIn.readLine());
-
-			System.out.print("Title: ");
-			abi.setTitle(conIn.readLine());
-
-			System.out.print("Year Published: ");
-			abi.setYearPublished(conIn.readLine());
-
-			int numTracks = 0;
-			int chapter = 0;
-			while (chapter < 1 || numTracks != 0) {
-				System.out.print("Number of tracks for chapter " + chapter
-						+ ": ");
-				numTracks = Integer.parseInt(conIn.readLine());
-
-				if (numTracks > 0) {
-					abi.setChapterTracks(chapter, numTracks);
-					System.out.print("Name of chapter " + chapter + ": ");
-					abi.setChapterName(chapter, conIn.readLine());
-				}
-				chapter++;
-			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			System.exit(1);
-		}
-		return abi;
-	}
 
 	private static DirectoryStructure getMp3Files(String directory) {
 		DirectoryStructure ds = new DirectoryStructure();
@@ -69,13 +33,36 @@ public class ABTMain {
 		log = Logger.getLogger("com.xylo04.audiobooktagger");
 		log.setLevel(Level.FINEST);
 
+		// Recursively scan the directory for MP3's
 		String directory = parseArgs(args);
 		DirectoryStructure ds = getMp3Files(directory);
 		System.out.println("Found " + ds.getNumFiles()
 				+ " MP3 files under directory " + directory);
 
-		AudiobookInfo abi = audiobookQuestionaire();
+		// Ask user to enter audiobook metadata, repeat if number of tracks
+		// doesn't match directory scan
+		AudiobookInfo abi = new AudiobookInfo();
+		do {
+			abi.audiobookQuestionaire();
+			if (abi.getTrackCount() != ds.getNumFiles()) {
+				System.out
+						.println("Track numbers didn't match! Please try again.");
+			}
+		} while (abi.getTrackCount() != ds.getNumFiles());
 		System.out.println(abi.toString());
+
+		// Confirm renaming procedure
+		List<String> newFilenames = new ArrayList<String>();
+		System.out
+				.println("WARNING: The following changes are about to take place:");
+		int track = 1;
+		for (File f : ds.getFiles()) {
+			newFilenames.add(abi.getFilename(track));
+			System.out.println(f.getAbsoluteFile() + " ==> "
+					+ newFilenames.get(track-1));
+			track++;
+		}
+		System.out.println("Is this OK?");
 	}
 
 	private static String parseArgs(String[] args) {
@@ -96,7 +83,7 @@ public class ABTMain {
 			System.exit(1);
 		}
 		Tag tag = af.getTag();
-		System.out.print(f.getName() + "\t");
+		System.out.print(f.getAbsoluteFile() + "\t");
 		System.out.print(tag.getFirst(FieldKey.TITLE) + "\t");
 		System.out.print(tag.getFirst(FieldKey.ARTIST) + "\t");
 		System.out.print(tag.getFirst(FieldKey.ALBUM) + "\n");
