@@ -37,32 +37,42 @@ public class ABTMain {
 		String directory = parseArgs(args);
 		DirectoryStructure ds = getMp3Files(directory);
 		System.out.println("Found " + ds.getNumFiles()
-				+ " MP3 files under directory " + directory);
+				+ " MP3 files under directory "
+				+ ds.getRoot().getAbsolutePath());
 
 		// Ask user to enter audiobook metadata, repeat if number of tracks
-		// doesn't match directory scan
+		// doesn't match directory scan (should probably be more forgiving)
 		AudiobookInfo abi = new AudiobookInfo();
 		do {
 			abi.audiobookQuestionaire();
 			if (abi.getTrackCount() != ds.getNumFiles()) {
 				System.out
-						.println("Track numbers didn't match! Please try again.");
+						.println("Track numbers didn't match! Please try again.\n");
 			}
 		} while (abi.getTrackCount() != ds.getNumFiles());
 		System.out.println(abi.toString());
 
-		// Confirm renaming procedure
-		List<String> newFilenames = new ArrayList<String>();
-		System.out
-				.println("WARNING: The following changes are about to take place:");
-		int track = 1;
-		for (File f : ds.getFiles()) {
-			newFilenames.add(abi.getFilename(track));
-			System.out.println(f.getAbsoluteFile() + " ==> "
-					+ newFilenames.get(track-1));
-			track++;
+		// Generate new names
+		List<File> newFilenames = new ArrayList<File>();
+		for (int i = 0; i < ds.getNumFiles(); i++) {
+			newFilenames.add(new File(ds.getRoot().getAbsolutePath()
+					+ File.separator + abi.getFilename(i + 1)));
 		}
-		System.out.println("Is this OK?");
+
+		// Confirm renaming procedure
+		System.out
+				.println("\nWARNING: The following changes are about to take place:");
+		for (int i = 0; i < ds.getNumFiles(); i++) {
+			System.out.println(ds.get(i).getAbsolutePath() + " ==> "
+					+ newFilenames.get(i).getAbsolutePath());
+		}
+		// System.out.println("Is this OK?\n");
+
+		// Proceed with renaming
+		System.out.println("Transforming files...");
+		transformFiles(ds.getFiles(), newFilenames, abi);
+		System.out.println("Done.");
+
 	}
 
 	private static String parseArgs(String[] args) {
@@ -74,18 +84,24 @@ public class ABTMain {
 		return directory;
 	}
 
-	private static void printTags(File f) {
-		AudioFile af = null;
-		try {
-			af = AudioFileIO.read(f);
-		} catch (Exception e) {
-			log.warning(e.getMessage());
-			System.exit(1);
+	private static void transformFiles(List<File> oldFiles,
+			List<File> newFiles, AudiobookInfo abi) {
+		for (int i = 0; i < oldFiles.size(); i++) {
+			oldFiles.get(i).renameTo(newFiles.get(i));
+			try {
+				AudioFile af = AudioFileIO.read(newFiles.get(i));
+				Tag tag = af.getTag();
+				tag.setField(FieldKey.ARTIST, abi.getAuthor());
+				tag.setField(FieldKey.ALBUM_ARTIST, abi.getAuthor());
+				tag.setField(FieldKey.ALBUM, abi.getBookTitle());
+				tag.setField(FieldKey.YEAR, abi.getYearPublished());
+				tag.setField(FieldKey.TITLE, abi.getTrackTitle(i + 1));
+				tag.setField(FieldKey.TRACK, Integer.toString(i + 1));
+				tag.setField(FieldKey.GENRE, "Audiobook");
+				af.commit();
+			} catch (Exception e) {
+				log.warning(e.getLocalizedMessage());
+			}
 		}
-		Tag tag = af.getTag();
-		System.out.print(f.getAbsoluteFile() + "\t");
-		System.out.print(tag.getFirst(FieldKey.TITLE) + "\t");
-		System.out.print(tag.getFirst(FieldKey.ARTIST) + "\t");
-		System.out.print(tag.getFirst(FieldKey.ALBUM) + "\n");
 	}
 }

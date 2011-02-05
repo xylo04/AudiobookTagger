@@ -80,8 +80,7 @@ public class AudiobookInfo {
 				nbrfmt.setMinimumIntegerDigits(Integer
 						.toString(getTrackCount()).length());
 				String retval = nbrfmt.format(targetTrackNumber) + " ";
-				retval += getTrackTitle(targetTrackNumber) + " ";
-				retval += chapterNames.get(chapter);
+				retval += getTrackTitle(targetTrackNumber);
 				retval += ".mp3";
 				return retval;
 			}
@@ -110,7 +109,8 @@ public class AudiobookInfo {
 					offsetFromLastChapter = targetTrackNumber;
 				}
 				char offsetLetter = (char) ('a' + offsetFromLastChapter - 1);
-				retval += offsetLetter;
+				retval += offsetLetter + " ";
+				retval += chapterNames.get(chapter);
 				return retval;
 			}
 		}

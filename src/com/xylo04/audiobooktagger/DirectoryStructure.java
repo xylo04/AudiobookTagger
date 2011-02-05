@@ -3,17 +3,26 @@ package com.xylo04.audiobooktagger;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 
 public class DirectoryStructure {
-	Collection<File> files = new ArrayList<File>();
+	List<File> files = new ArrayList<File>();
+	private File root;
 
-	public Collection<File> getFiles() {
+	public File get(int i) {
+		return files.get(i);
+	}
+
+	public List<File> getFiles() {
 		return files;
 	}
 
 	public int getNumFiles() {
 		return files.size();
+	}
+
+	public File getRoot() {
+		return root;
 	}
 
 	public void scanDirectory(File file) {
@@ -26,6 +35,7 @@ public class DirectoryStructure {
 	}
 
 	public void scanDirectory(File file, FileFilter fileFilter) {
+		root = file;
 		scanDirectoryRecursive(file, fileFilter);
 	}
 
@@ -40,5 +50,4 @@ public class DirectoryStructure {
 			}
 		}
 	}
-
 }
