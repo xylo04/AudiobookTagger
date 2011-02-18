@@ -2,6 +2,7 @@ package com.xylo04.audiobooktagger;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -15,6 +16,8 @@ import org.jaudiotagger.tag.Tag;
 public class ABTMain {
 
 	private static Logger log;
+	private static String rootDirectory;
+	private static String infoFile;
 
 	private static DirectoryStructure getMp3Files(String directory) {
 		DirectoryStructure ds = new DirectoryStructure();
@@ -30,26 +33,31 @@ public class ABTMain {
 
 	public static void main(String[] args) {
 		Logger.getLogger("org.jaudiotagger").setLevel(Level.WARNING);
-		log = Logger.getLogger("com.xylo04.audiobooktagger");
+		log = Logger.getLogger("com.xylo04.audiobooktagger.ABTMain");
 		log.setLevel(Level.FINEST);
 
-		// Recursively scan the directory for MP3's
-		String directory = parseArgs(args);
-		DirectoryStructure ds = getMp3Files(directory);
+		parseArgs(args);
+		DirectoryStructure ds = getMp3Files(rootDirectory);
 		System.out.println("Found " + ds.getNumFiles()
 				+ " MP3 files under directory "
 				+ ds.getRoot().getAbsolutePath());
 
-		// Ask user to enter audiobook metadata, repeat if number of tracks
-		// doesn't match directory scan (should probably be more forgiving)
 		AudiobookInfo abi = new AudiobookInfo();
-		do {
-			abi.audiobookQuestionaire();
-			if (abi.getTrackCount() != ds.getNumFiles()) {
-				System.out
-						.println("Track numbers didn't match! Please try again.\n");
-			}
-		} while (abi.getTrackCount() != ds.getNumFiles());
+		AudiobookInfoFiller filler;
+		if (infoFile == null) {
+			filler = new AudiobookQuestionnaire(abi);
+		} else {
+			filler = new AudiobookInfoFillerFile(abi, new File(infoFile));
+		}
+		filler.fillAudiobook();
+		if (abi.getTrackCount() != ds.getNumFiles()) {
+			System.out
+					.println("Track numbers didn't match! Please try again.\n");
+			System.out.println("Number of files: " + ds.getNumFiles());
+			System.out.println("Number of tracks from chapters: "
+					+ abi.getTrackCount());
+			System.exit(1);
+		}
 		System.out.println(abi.toString());
 
 		// Generate new names
@@ -66,22 +74,35 @@ public class ABTMain {
 			System.out.println(ds.get(i).getAbsolutePath() + " ==> "
 					+ newFilenames.get(i).getAbsolutePath());
 		}
-		// System.out.println("Is this OK?\n");
+		char confirmation = ' ';
+		while (confirmation != 'y' && confirmation != 'n') {
+			System.out.println("Is this OK? [y/n]");
+			try {
+				confirmation = (char) System.in.read();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 
-		// Proceed with renaming
-		System.out.println("Transforming files...");
-		transformFiles(ds.getFiles(), newFilenames, abi);
+		if (confirmation == 'y') {
+			// Proceed with renaming
+			System.out.println("Transforming files...");
+			transformFiles(ds.getFiles(), newFilenames, abi);
+		}
 		System.out.println("Done.");
 
 	}
 
-	private static String parseArgs(String[] args) {
-		if (args.length == 0) {
-			System.out.println("usage:  java ABTMain <directory>");
+	private static void parseArgs(String[] args) {
+		if (args.length != 1 && args.length != 2) {
+			System.out.println("usage:  java ABTMain <directory> [infofile]");
 			System.exit(1);
 		}
-		String directory = args[0];
-		return directory;
+		rootDirectory = args[0];
+		if (args.length == 2) {
+			infoFile = args[1];
+		}
 	}
 
 	private static void transformFiles(List<File> oldFiles,

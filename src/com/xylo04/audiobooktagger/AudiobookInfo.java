@@ -1,7 +1,5 @@
 package com.xylo04.audiobooktagger;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,44 +19,6 @@ public class AudiobookInfo {
 	private Integer trackCount = 0;
 	private String yearPublished;
 
-	public void audiobookQuestionaire() {
-		BufferedReader conIn = new BufferedReader(new InputStreamReader(
-				System.in));
-
-		try {
-			System.out.print("Author: ");
-			this.setAuthor(conIn.readLine());
-
-			System.out.print("Title: ");
-			this.setBookTitle(conIn.readLine());
-
-			System.out.print("Year Published: ");
-			this.setYearPublished(conIn.readLine());
-
-			int numTracks = 0;
-			int chapter = 0;
-			while (chapter <= 1 || numTracks != 0) {
-				System.out.print("Number of tracks for chapter " + chapter
-						+ ": ");
-				numTracks = Integer.parseInt(conIn.readLine());
-
-				if (numTracks > 0) {
-					this.setChapterTracks(chapter, numTracks);
-					System.out.print("Name of chapter " + chapter + ": ");
-					this.setChapterName(chapter, conIn.readLine());
-				} else if (chapter == 0 && numTracks == 0) {
-					this.setChapterTracks(chapter, 0);
-					this.setChapterName(chapter, "");
-				}
-				chapter++;
-			}
-		} catch (Exception e) {
-			log.severe(e.getLocalizedMessage());
-			e.printStackTrace();
-			System.exit(1);
-		}
-	}
-
 	public String getAuthor() {
 		return author;
 	}
@@ -73,19 +33,22 @@ public class AudiobookInfo {
 
 	// TODO: way to combine this with getTrackTitle()
 	public String getFilename(int targetTrackNumber) {
-		for (int chapter = 0; chapter < chapterCount; chapter++) {
+		String retval = null;
+		for (int chapter = 0; chapter < chapterCount && retval == null; chapter++) {
 			if (chapterTracksCumSum.get(chapter) >= targetTrackNumber) {
 				NumberFormat nbrfmt = NumberFormat.getIntegerInstance();
 				nbrfmt.setGroupingUsed(false);
 				nbrfmt.setMinimumIntegerDigits(Integer
 						.toString(getTrackCount()).length());
-				String retval = nbrfmt.format(targetTrackNumber) + " ";
+				retval = nbrfmt.format(targetTrackNumber) + " ";
 				retval += getTrackTitle(targetTrackNumber);
 				retval += ".mp3";
-				return retval;
+
 			}
 		}
-		return null;
+		log.finest("Generated filename for track " + targetTrackNumber + " is "
+				+ retval);
+		return retval;
 	}
 
 	public int getTrackCount() {
@@ -94,13 +57,14 @@ public class AudiobookInfo {
 
 	// TODO: way to combine this with getFilename()
 	public String getTrackTitle(Integer targetTrackNumber) {
-		for (int chapter = 0; chapter < chapterCount; chapter++) {
+		String retval = null;
+		for (int chapter = 0; chapter < chapterCount && retval == null; chapter++) {
 			if (chapterTracksCumSum.get(chapter) >= targetTrackNumber) {
 				NumberFormat nbrfmt = NumberFormat.getIntegerInstance();
 				nbrfmt.setGroupingUsed(false);
 				nbrfmt.setMinimumIntegerDigits(Integer.toString(chapterCount)
 						.length());
-				String retval = "Ch" + nbrfmt.format(chapter);
+				retval = "Ch" + nbrfmt.format(chapter);
 				int offsetFromLastChapter = 0;
 				if (chapter > 0) {
 					offsetFromLastChapter = targetTrackNumber
@@ -111,10 +75,11 @@ public class AudiobookInfo {
 				char offsetLetter = (char) ('a' + offsetFromLastChapter - 1);
 				retval += offsetLetter + " ";
 				retval += chapterNames.get(chapter);
-				return retval;
 			}
 		}
-		return null;
+		log.finest("Generated title for track " + targetTrackNumber + " is "
+				+ retval);
+		return retval;
 	}
 
 	public String getYearPublished() {
@@ -122,18 +87,22 @@ public class AudiobookInfo {
 	}
 
 	public void setAuthor(String newAuthor) {
+		log.finest("Setting author " + newAuthor);
 		author = newAuthor;
 	}
 
 	public void setBookTitle(String newTitle) {
+		log.finest("Setting book title " + newTitle);
 		book_title = newTitle;
 	}
 
 	public void setChapterName(int chapter, String name) {
+		log.finest("Setting chapter " + chapter + " name " + name);
 		chapterNames.add(chapter, name);
 	}
 
 	public void setChapterTracks(int chapter, int numTracks) {
+		log.finest("Setting chapter " + chapter + " tracks " + numTracks);
 		try {
 			if (chapterTracks.get(chapter) != null) {
 				trackCount -= chapterTracks.get(chapter);
@@ -147,6 +116,7 @@ public class AudiobookInfo {
 	}
 
 	public void setYearPublished(String newYear) {
+		log.finest("Setting year published " + newYear);
 		yearPublished = newYear;
 	}
 
